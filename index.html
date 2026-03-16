@@ -450,7 +450,7 @@ footer{background:#111;color:rgba(255,255,255,.35);text-align:center;padding:18p
       <div class="srv-card">
         <div class="srv-icon">🚚</div>
         <div class="srv-title">Доставка по НО</div>
-        <div class="srv-desc">Довезём теплицу на ваш участок. Радиус до 100 км от Крутого Майдана.</div>
+        <div class="srv-desc">Довезём теплицу на ваш участок. Радиус до 100 км от Нижегородской области.</div>
         <div class="srv-price">от 1 500 ₽</div>
       </div>
       <div class="srv-card">
@@ -561,7 +561,7 @@ footer{background:#111;color:rgba(255,255,255,.35);text-align:center;padding:18p
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-title">Производство</div>
-        <div class="step-text">Изготавливаем в течение 1–3 дней на нашем участке в Крутом Майдане.</div>
+        <div class="step-text">Изготавливаем в течение 1–3 дней на нашем участке в Нижегородской области.</div>
       </div>
       <div class="step">
         <div class="step-num">3</div>
@@ -1077,77 +1077,40 @@ const MODELS = [
   }
 ];
 
-// ─── Build gallery cards ───────────────────────────────────────────────────
-const grid = document.getElementById('galleryGrid');
-MODELS.forEach((m, idx) => {
-  const card = document.createElement('div');
-  card.className = 'g-card';
-  card.setAttribute('role', 'button');
-  card.setAttribute('aria-label', 'Открыть  + m.name);
-  card.setAttribute('tabindex', '0');
-  card.setAttribute('aria-label', 'Открыть ' + m.name);
-  card.innerHTML = `
-    <div class="g-img">
-      ${m.svgs[0]}
-      <div class="g-zoom-hint">🔍 Нажмите</div>
-    </div>
-    <div class="g-body">
-      <div class="g-tag">${m.tag}</div>
-      <div class="g-name">${m.name}</div>
-      <div class="g-desc">${m.desc}</div>
-      <div class="g-foot">
-        <div>
-          <div class="g-price">${m.price}</div>
-          <div class="g-old">${m.oldPrice}</div>
-        </div>
-        <span class="g-btn">Подробнее</span>
-      </div>
-    </div>`;
-  card.onclick = () => openLb(idx, 0);
-  card.onkeydown = e => { if (e.key === 'Enter') openLb(idx, 0); };
-  grid.appendChild(card);
-});
+// ─── Build gallery cards (safe, DOM-ready) ──────────────────────────────────
+function buildGallery() {
+  const grid = document.getElementById('galleryGrid');
+  if (!grid) { console.error('galleryGrid not found'); return; }
+  if (typeof MODELS === 'undefined') { console.error('MODELS not defined'); return; }
+  
+  grid.innerHTML = '';
+  MODELS.forEach(function(m, idx) {
+    var card = document.createElement('div');
+    card.className = 'g-card';
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', 'Открыть ' + m.name);
+    card.innerHTML = '<div class="g-img">' + m.svgs[0] + '<div class="g-zoom-hint">🔍 Нажмите</div></div>'
+      + '<div class="g-body">'
+      + '<div class="g-tag">' + m.tag + '</div>'
+      + '<div class="g-name">' + m.name + '</div>'
+      + '<div class="g-desc">' + m.desc + '</div>'
+      + '<div class="g-foot">'
+      + '<div><div class="g-price">' + m.price + '</div><div class="g-old">' + m.oldPrice + '</div></div>'
+      + '<span class="g-btn">Подробнее</span>'
+      + '</div></div>';
+    (function(i){ 
+      card.onclick = function(){ openLb(i, 0); };
+      card.onkeydown = function(e){ if(e.key==='Enter') openLb(i, 0); };
+    })(idx);
+    grid.appendChild(card);
+  });
+  console.log('Gallery built: ' + MODELS.length + ' cards');
+}
 
-// ─── Lightbox logic ────────────────────────────────────────────────────────
-let lbModel = 0, lbView = 0;
-
-function openLb(modelIdx, viewIdx) {
-  lbModel = modelIdx; lbView = viewIdx;
-  renderLb();
-  document.getElementById('lightbox').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeLb() {
-  document.getElementById('lightbox').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function lbClickOutside(e) {
-  if (e.target === document.getElementById('lightbox')) closeLb();
-}
-function lbNav(dir) {
-  lbModel = (lbModel + dir + MODELS.length) % MODELS.length;
-  lbView = 0;
-  renderLb();
-}
-function lbSetView(v) {
-  lbView = v;
-  renderLb();
-}
-function renderLb() {
-  const m = MODELS[lbModel];
-  document.getElementById('lbArt').innerHTML = m.svgs[lbView];
-  document.getElementById('lbName').textContent = m.name;
-  document.getElementById('lbPrice').textContent = m.price;
-  // views tabs
-  const vt = document.getElementById('lbViews');
-  vt.innerHTML = m.views.map((v,i) =>
-    `<button class="lb-vtab${i===lbView?' active':''}" onclick="lbSetView(${i})">${v}</button>`
-  ).join('');
-  // specs
-  const sp = document.getElementById('lbSpecs');
-  sp.innerHTML = m.specs.map(s =>
-    `<div class="lb-spec"><strong>${s.l}</strong>${s.v}</div>`
-  ).join('');
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', buildGallery);
+} else {
+  buildGallery();
 }
 
 // keyboard navigation
